@@ -14,9 +14,6 @@ const users = require("../initial-data/users.json");
 const brands = require("../initial-data/brands.json");
 const products = require("../initial-data/products.json");
 
-// Local Data
-const cart = [];
-
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -34,7 +31,11 @@ app.listen(PORT, () => {
 
 // Brand routes
 app.get("/brands", (req, res) => {
-  res.status(200).json(brands);
+  if (brands.length > 0) {
+    res.status(200).json(brands);
+  } else {
+    res.status(400).json({ error: "No brands found" });
+  }
 });
 
 app.get("/brands/:id/products", (req, res) => {
@@ -53,6 +54,13 @@ app.get("/products", (req, res) => {
 
 app.get("/me/cart", (req, res) => {
   res.status(200).json(cart);
+});
+
+app.post("/login", (req, res) => {
+  const correctUser = users.map((user) => user.login.username);
+  const correctPass = users.map((user) => user.login.password);
+  console.log(req.query);
+  // TODO: rewatch authentication section.
 });
 
 module.exports = app;

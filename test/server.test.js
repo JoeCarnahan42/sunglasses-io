@@ -13,7 +13,9 @@ chai.use(chaiHttp);
 
 describe("Brands", () => {
   describe("/GET brands", () => {
-    it("should return all brands", (done) => {
+    it("should GET an array of brands with id's when there are any", (done) => {
+      const brands = [{ id: "1", name: "Nike" }];
+      // Figure out how to implement negative test
       chai
         .request(server)
         .get("/brands")
@@ -51,26 +53,93 @@ describe("Brands", () => {
   });
 });
 
-// describe("Login", () => {
-//   describe("/POST login", () => {
-//     it("should login successfully with correct credentials", (done) => {
-//       // Write Test
-//     });
-//   });
-// });
+describe("Login", () => {
+  describe("/POST login", () => {
+    it("should login successfully with correct credentials", (done) => {
+      // Write Test
+      const loginCreds = {
+        userName: "yellowleopard753",
+        passWord: "jonjon",
+      };
 
-// describe("Cart", () => {
-//   describe("/GET me/cart", () => {
-//     it("should return all items in the cart if a user is logged in", (done) => {});
-//   });
+      chai
+        .request(server)
+        .post("/login")
+        .send(loginCreds)
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.body.should.have.property("token");
+          res.body.token.should.be.a("string");
+          done();
+        });
+    });
+    it("should fail if credentials are incorrect", (done) => {
+      const loginCreds = {
+        userName: "incorrect",
+        passWord: "wrongPass",
+      };
 
-//   describe("/POST me/cart", () => {});
+      chai
+        .request(server)
+        .post("/login")
+        .send(loginCreds)
+        .end((err, res) => {
+          res.should.have.status(401);
+          res.body.should.have.property("error");
+        });
+    });
+    it("should fail if a username is not entered", (done) => {
+      const loginCreds = {
+        passWord: "jonjon",
+      };
 
-//   describe("/POST me/cart/:productId", () => {
-//     it("should POST a specifit item to the cart", (done) => {});
-//   });
+      chai
+        .request(server)
+        .post("/login")
+        .send(loginCreds)
+        .end((err, res) => {
+          res.should.have.status(401);
+          res.body.should.have.property("error");
+        });
+    });
+    it("should fail if a password is not entered", (done) => {
+      const loginCreds = {
+        userName: "yellowleopard753",
+      };
 
-//   describe("/DELETE me/cart/:productId", () => {
-//     it("should DELETE a specific item from the cart", (done) => {});
-//   });
-// });
+      chai
+        .request(server)
+        .post("/login")
+        .send(loginCreds)
+        .end((err, res) => {
+          res.should.have.status(401);
+          res.body.should.have.property("error");
+        });
+    });
+  });
+});
+
+describe("Cart", () => {
+  describe("/GET me/cart", () => {
+    it("should return all items in the cart", (done) => {
+      chai
+        .request(server)
+        .get("/me/cart")
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.body.should.be.an("array");
+          done();
+        });
+    });
+  });
+
+  //   describe("/POST me/cart", () => {});
+
+  //   describe("/POST me/cart/:productId", () => {
+  //     it("should POST a specifit item to the cart", (done) => {});
+  //   });
+
+  //   describe("/DELETE me/cart/:productId", () => {
+  //     it("should DELETE a specific item from the cart", (done) => {});
+  //   });
+});
