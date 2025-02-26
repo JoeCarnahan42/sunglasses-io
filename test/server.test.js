@@ -3,19 +3,12 @@ const chaiHttp = require("chai-http");
 const server = require("../app/server"); // Adjust the path as needed
 
 const should = chai.should();
+const expect = chai.expect;
 chai.use(chaiHttp);
-
-// TODO: Write tests for the server
-// Routes to support:
-// GET: brands(DONE), brands/:id/products(DONE), products(DONE), me/cart(DONE)
-// POST: login(DONE), me/cart - post item to the cart, me/cart/:productId - change quantity of item in cart
-// DELETE: me/cart/:productId - remove item from cart
 
 describe("Brands", () => {
   describe("/GET brands", () => {
     it("should GET an array of brands with id's when there are any", (done) => {
-      const brands = [{ id: "1", name: "Nike" }];
-      // Figure out how to implement negative test
       chai
         .request(server)
         .get("/api/brands")
@@ -56,7 +49,6 @@ describe("Brands", () => {
 describe("Login", () => {
   describe("/POST login", () => {
     it("should login successfully with correct credentials", (done) => {
-      // Write Test
       const loginCreds = {
         username: "yellowleopard753",
         password: "jonjon",
@@ -122,7 +114,7 @@ describe("Login", () => {
 });
 
 describe("Cart", () => {
-  describe("/api/me/cart", () => {
+  describe("/GET me/cart", () => {
     it("should return a cart array", (done) => {
       chai
         .request(server)
@@ -130,6 +122,65 @@ describe("Cart", () => {
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.an("array");
+          done();
+        });
+    });
+  });
+  describe("/POST me/cart", () => {
+    it("should add an item to the cart", (done) => {
+      const item = {
+        id: "1",
+        categoryId: "1",
+        name: "Superglasses",
+        description: "The best glasses in the world",
+        price: 150,
+        imageUrls: [
+          "https://image.shutterstock.com/z/stock-photo-yellow-sunglasses-white-backgound-600820286.jpg",
+          "https://image.shutterstock.com/z/stock-photo-yellow-sunglasses-white-backgound-600820286.jpg",
+          "https://image.shutterstock.com/z/stock-photo-yellow-sunglasses-white-backgound-600820286.jpg",
+        ],
+      };
+      chai
+        .request(server)
+        .post("/api/me/cart")
+        .send(item)
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.body.should.be.an("array");
+          done();
+        });
+    });
+  });
+  describe("/POST me/cart/:productId", () => {
+    it("should change the quantity of an item in the cart or add the item to the cart with the specified quantity if it does not exist", (done) => {
+      const productId = "1";
+      const newQuantity = 5;
+
+      chai
+        .request(server)
+        .post(`/api/me/cart/${productId}`)
+        .send({ quantity: newQuantity })
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.body.should.be.an("object");
+          res.body.should.have.property("id", productId);
+          res.body.should.have.property("quantity", newQuantity);
+          done();
+        });
+    });
+  });
+  describe("/DELETE me/cart/:productId", () => {
+    it("should remove the specified item from the cart or return the cart if the item does not exist", (done) => {
+      const productId = "1";
+
+      chai
+        .request(server)
+        .delete(`/api/me/cart/${productId}`)
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.body.should.be.an("array");
+          expect(res.body.find((item) => item.id === productId)).to.be
+            .undefined;
           done();
         });
     });
