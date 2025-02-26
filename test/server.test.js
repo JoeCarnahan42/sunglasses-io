@@ -7,9 +7,9 @@ chai.use(chaiHttp);
 
 // TODO: Write tests for the server
 // Routes to support:
-// GET: brands(DONE), brands/:id/products(DONE), products(DONE), me/cart
-// POST: login, me/cart, me/cart/:productId
-// DELETE: me/cart/:productId
+// GET: brands(DONE), brands/:id/products(DONE), products(DONE), me/cart(DONE)
+// POST: login(DONE), me/cart - post item to the cart, me/cart/:productId - change quantity of item in cart
+// DELETE: me/cart/:productId - remove item from cart
 
 describe("Brands", () => {
   describe("/GET brands", () => {
@@ -18,7 +18,7 @@ describe("Brands", () => {
       // Figure out how to implement negative test
       chai
         .request(server)
-        .get("/brands")
+        .get("/api/brands")
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.an("array");
@@ -31,7 +31,7 @@ describe("Brands", () => {
     it("should GET all products", (done) => {
       chai
         .request(server)
-        .get("/products")
+        .get("/api/products")
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.an("array");
@@ -43,7 +43,7 @@ describe("Brands", () => {
     it("should GET all products of specified brand", (done) => {
       chai
         .request(server)
-        .get("/brands/1/products")
+        .get("/api/brands/1/products")
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.an("array");
@@ -58,73 +58,75 @@ describe("Login", () => {
     it("should login successfully with correct credentials", (done) => {
       // Write Test
       const loginCreds = {
-        userName: "yellowleopard753",
-        passWord: "jonjon",
+        username: "yellowleopard753",
+        password: "jonjon",
       };
 
       chai
         .request(server)
-        .post("/login")
+        .post("/api/login")
         .send(loginCreds)
         .end((err, res) => {
           res.should.have.status(200);
-          res.body.should.have.property("token");
-          res.body.token.should.be.a("string");
+          res.body.should.be.a("string");
           done();
         });
     });
     it("should fail if credentials are incorrect", (done) => {
       const loginCreds = {
-        userName: "incorrect",
-        passWord: "wrongPass",
+        username: "incorrect",
+        password: "wrongPass",
       };
 
       chai
         .request(server)
-        .post("/login")
+        .post("/api/login")
         .send(loginCreds)
         .end((err, res) => {
           res.should.have.status(401);
           res.body.should.have.property("error");
+          done();
         });
     });
     it("should fail if a username is not entered", (done) => {
       const loginCreds = {
-        passWord: "jonjon",
+        password: "jonjon",
       };
 
       chai
         .request(server)
-        .post("/login")
+        .post("/api/login")
         .send(loginCreds)
         .end((err, res) => {
-          res.should.have.status(401);
+          res.should.have.status(400);
           res.body.should.have.property("error");
+          done();
         });
     });
     it("should fail if a password is not entered", (done) => {
       const loginCreds = {
-        userName: "yellowleopard753",
+        username: "yellowleopard753",
       };
 
       chai
         .request(server)
-        .post("/login")
+        .post("/api/login")
         .send(loginCreds)
         .end((err, res) => {
-          res.should.have.status(401);
+          res.should.have.status(400);
           res.body.should.have.property("error");
+          done();
         });
     });
   });
 });
 
 describe("Cart", () => {
-  describe("/GET me/cart", () => {
-    it("should return all items in the cart", (done) => {
+  describe("/api/me/cart", () => {
+    it("should return a cart array", (done) => {
       chai
         .request(server)
-        .get("/me/cart")
+        .get("/api/me/cart")
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.an("array");
@@ -132,14 +134,4 @@ describe("Cart", () => {
         });
     });
   });
-
-  //   describe("/POST me/cart", () => {});
-
-  //   describe("/POST me/cart/:productId", () => {
-  //     it("should POST a specifit item to the cart", (done) => {});
-  //   });
-
-  //   describe("/DELETE me/cart/:productId", () => {
-  //     it("should DELETE a specific item from the cart", (done) => {});
-  //   });
 });
