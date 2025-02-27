@@ -69,7 +69,8 @@ app.get("/api/me/cart", (req, res) => {
 
 // Set user to null until a user is logged in
 let user = null;
-const JWT_KEY = process.env.SECRET_KEY;
+// Using optional revealed key in case tester does not have .env file with secret key
+const JWT_KEY = process.env.SECRET_KEY || 84345512;
 
 app.post("/api/login", (req, res) => {
   if (req.body.username && req.body.password) {
