@@ -24,7 +24,7 @@ app.use((err, req, res, next) => {
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Starting the server
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
@@ -39,32 +39,32 @@ app.get("/api/brands", (req, res) => {
 });
 
 app.get("/api/brands/:id/products", (req, res) => {
-  const brandId = String(req.params.id);
-  const filterProducts = products.filter((product) => {
-    const categoryId = String(product.categoryId);
-    return categoryId === brandId;
-  });
-  res.status(200).json(filterProducts);
+  if (brands && products) {
+    const brandId = String(req.params.id);
+    const filterProducts = products.filter((product) => {
+      const categoryId = String(product.categoryId);
+      return categoryId === brandId;
+    });
+    res.status(200).json(filterProducts);
+  } else {
+    res.status(400).json({ error: "No products found" });
+  }
 });
 
 app.get("/api/products", (req, res) => {
-  res.status(200).json(products);
+  if (products) {
+    res.status(200).json(products);
+  } else {
+    res.status(400).json({ error: "No products found" });
+  }
 });
-
-// Global cart for users that are not logged in
-let cart = [];
 
 app.get("/api/me/cart", (req, res) => {
   if (user) {
-    const findUser = users.find(
-      (correctUser) => user.username === correctUser.login.username
-    );
-    // Change cart to specific user's cart
-    cart = findUser.cart;
-    res.status(200).json(cart);
-  } else {
-    res.status(200).json(cart);
+    const cart = user.cart;
+    return res.status(200).json(cart);
   }
+  res.status(401).json({ error: "You must be logged in to view the cart" });
 });
 
 // Set user to null until a user is logged in
@@ -88,10 +88,8 @@ app.post("/api/login", (req, res) => {
         },
         JWT_KEY
       );
-      user = {
-        username: checkUser.login.username,
-        token: newAccessToken,
-      };
+      user = checkUser;
+      user.token = newAccessToken;
       res.status(200).json(newAccessToken);
     } else {
       res.status(401).json({ error: "Invalid username or password" });
@@ -102,35 +100,54 @@ app.post("/api/login", (req, res) => {
 });
 
 app.post("/api/me/cart", (req, res) => {
-  const item = req.body;
-  item.quantity = 1;
-  cart.push(item);
-  res.status(200).json(cart);
+  if (user) {
+    const item = req.body;
+    const cart = user.cart;
+    item.quantity = 1;
+    cart.push(item);
+    res.status(200).json(cart);
+  } else {
+    res
+      .status(401)
+      .json({ error: "You must be logged in to add items to the cart" });
+  }
 });
 
 app.post("/api/me/cart/:productId", (req, res) => {
-  const newQuantity = req.body.quantity;
-  const productId = req.params.productId;
-  const itemToUpdate = cart.find((item) => item.id === productId);
-  if (itemToUpdate) {
-    itemToUpdate.quantity = newQuantity;
-    res.status(200).json(itemToUpdate);
+  if (user) {
+    const cart = user.cart;
+    const newQuantity = req.body.quantity;
+    const productId = req.params.productId;
+    const itemToUpdate = cart.find((item) => item.id === productId);
+    if (itemToUpdate) {
+      itemToUpdate.quantity = newQuantity;
+      res.status(200).json(itemToUpdate);
+    } else {
+      const productToAdd = products.find((item) => item.id === productId);
+      productToAdd.quantity = newQuantity;
+      cart.push(productToAdd);
+      res.status(200).json(productToAdd);
+    }
   } else {
-    const productToAdd = products.find((item) => item.id === productId);
-    productToAdd.quantity = newQuantity;
-    cart.push(productToAdd);
-    res.status(200).json(productToAdd);
+    res
+      .status(401)
+      .json({ error: "You must have a cart to change item quantities" });
   }
 });
 
 app.delete("/api/me/cart/:productId", (req, res) => {
-  const productId = req.params.productId;
-  const itemToRemove = cart.find((item) => item.id === productId);
-  if (itemToRemove) {
-    cart = cart.filter((item) => item.id != productId);
-    res.status(200).json(cart);
+  if (user) {
+    let cart = user.cart;
+    const productId = req.params.productId;
+    const itemToRemove = cart.find((item) => item.id === productId);
+    if (itemToRemove) {
+      cart = cart.filter((item) => item.id != productId);
+      res.status(200).json(cart);
+    } else {
+      res.status(200).json(cart);
+    }
   } else {
-    res.status(200).json(cart);
+    res.status(401).json({ error: "You need to have a cart to remove items" });
   }
 });
 
