@@ -8,7 +8,7 @@ chai.use(chaiHttp);
 
 describe("Brands", () => {
   describe("/GET brands", () => {
-    it("should GET an array of brands with id's when there are any", (done) => {
+    it("should GET an array of brands", (done) => {
       chai
         .request(server)
         .get("/api/brands")
