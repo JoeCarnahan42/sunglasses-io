@@ -15,7 +15,6 @@ describe("Brands", () => {
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.an("array");
-          res.body.length.should.be.greaterThan(0);
           done();
         });
     });

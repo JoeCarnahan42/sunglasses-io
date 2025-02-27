@@ -69,7 +69,7 @@ app.get("/api/me/cart", (req, res) => {
 
 // Set user to null until a user is logged in
 let user = null;
-const SECRET_KEY = process.env.SECRET_KEY;
+const JWT_KEY = process.env.SECRET_KEY;
 
 app.post("/api/login", (req, res) => {
   if (req.body.username && req.body.password) {
@@ -85,7 +85,7 @@ app.post("/api/login", (req, res) => {
           id: checkUser.id,
           username: checkUser.login.username,
         },
-        SECRET_KEY
+        JWT_KEY
       );
       user = {
         username: checkUser.login.username,
