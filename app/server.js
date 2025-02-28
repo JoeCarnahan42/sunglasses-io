@@ -90,7 +90,7 @@ app.post("/api/login", (req, res) => {
       );
       user = checkUser;
       user.token = newAccessToken;
-      res.status(200).json(newAccessToken);
+      res.status(200).json(user);
     } else {
       res.status(401).json({ error: "Invalid username or password" });
     }

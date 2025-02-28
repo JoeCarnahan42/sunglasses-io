@@ -59,7 +59,7 @@ describe("Login", () => {
         .send(loginCreds)
         .end((err, res) => {
           res.should.have.status(200);
-          res.body.should.be.a("string");
+          res.body.should.be.a("object");
           done();
         });
     });

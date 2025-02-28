@@ -163,7 +163,7 @@ paths:
       tags:
         - "authentication"
       summary: "Logs the user in"
-      description: "Returns an authentication token"
+      description: "Returns the logged in user object with their authentication token"
       consumes:
         - "application/json"
       parameters:
@@ -181,7 +181,7 @@ paths:
               password:
                 type: "string"
       produces:
-        - "string"
+        - "object"
       responses:
         200:
           description: "Successful authentication, user logged in"
