@@ -41,7 +41,7 @@ app.get("/api/brands", (req, res) => {
 app.get("/api/brands/:id/products", (req, res) => {
   if (brands && products) {
     const brandId = String(req.params.id);
-    const filterProducts = products.filter((product) => {
+    const filteredProducts = products.filter((product) => {
       const categoryId = String(product.categoryId);
       return categoryId === brandId;
     });
