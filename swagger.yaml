@@ -67,9 +67,11 @@ paths:
       tags:
         - "cart"
       summary: "Get the cart"
-      description: "Returns the cart in a user is logged in"
+      description: "Returns the cart if a user is logged in"
       produces:
         - "application/json"
+      security:
+        - BearerAuth: []
       responses:
         200:
           description: "Successful response with a list of products inside the cart"
@@ -82,6 +84,8 @@ paths:
       description: "Returns the cart with the new item inside it"
       produces:
         - "application/json"
+      security:
+        - BearerAuth: []
       parameters:
         - in: "body"
           name: "product"
@@ -121,6 +125,8 @@ paths:
       description: "Returns the cart and items with the new quantity."
       produces:
         - "application/json"
+      security:
+        - BearerAuth: []
       parameters:
         - in: "body"
           name: "new quantity"
@@ -149,6 +155,8 @@ paths:
       description: "Returns the new cart without to deleted item"
       produces:
         - "application/json"
+      security:
+        - BearerAuth: []
       parameters:
         - in: "path"
           name: "productId"
@@ -191,3 +199,8 @@ paths:
           description: "Incorrectly formatted response"
         401:
           description: "Invalid username or password"
+securityDefinitions:
+  BearerAuth:
+    type: apiKey
+    name: Authorization
+    in: header

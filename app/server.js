@@ -7,6 +7,25 @@ const swaggerDocument = YAML.load("./swagger.yaml");
 const app = express();
 require("dotenv").config();
 
+// Using optional revealed key in case tester does not have .env file with secret key
+const JWT_KEY = process.env.SECRET_KEY || "84345512";
+
+const authenticate = (req, res, next) => {
+  const token = req.header("Authorization")?.split(" ")[1];
+
+  if (!token) {
+    res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_KEY);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(403).json({ error: "Invalid or expired token" });
+  }
+};
+
 app.use(bodyParser.json());
 
 // Importing the data from JSON files
@@ -31,11 +50,7 @@ app.listen(PORT, () => {
 
 // Routes
 app.get("/api/brands", (req, res) => {
-  if (brands.length > 0) {
-    res.status(200).json(brands);
-  } else {
-    res.status(400).json({ error: "No brands found" });
-  }
+  res.status(200).json(brands);
 });
 
 app.get("/api/brands/:id/products", (req, res) => {
@@ -48,45 +63,36 @@ app.get("/api/brands/:id/products", (req, res) => {
 });
 
 app.get("/api/products", (req, res) => {
-  if (products) {
-    res.status(200).json(products);
-  } else {
-    res.status(400).json({ error: "No products found" });
-  }
+  res.status(200).json(products);
 });
 
-app.get("/api/me/cart", (req, res) => {
-  if (user) {
-    const cart = user.cart;
-    return res.status(200).json(cart);
-  }
-  res.status(401).json({ error: "You must be logged in to view the cart" });
+app.get("/api/me/cart", authenticate, (req, res) => {
+  const cart = req.user.cart;
+  return res.status(200).json(cart);
 });
-
-// Set user to null until a user is logged in
-let user = null;
-// Using optional revealed key in case tester does not have .env file with secret key
-const JWT_KEY = process.env.SECRET_KEY || 84345512;
 
 app.post("/api/login", (req, res) => {
   if (req.body.username && req.body.password) {
-    const checkUser = users.find((user) => {
+    const validUser = users.find((user) => {
       return (
         user.login.username === req.body.username &&
         user.login.password === req.body.password
       );
     });
-    if (checkUser) {
+    if (validUser) {
+      const userIndex = users.findIndex(
+        (user) => user.login.sha1 === validUser.login.sha1
+      );
       const newAccessToken = jwt.sign(
         {
-          id: checkUser.id,
-          username: checkUser.login.username,
+          username: validUser.login.username,
+          cart: validUser.cart,
         },
-        JWT_KEY
+        JWT_KEY,
+        { expiresIn: "30m" }
       );
-      user = checkUser;
-      user.token = newAccessToken;
-      res.status(200).json(user);
+      users[userIndex].token = newAccessToken;
+      res.status(200).json(newAccessToken);
     } else {
       res.status(401).json({ error: "Invalid username or password" });
     }
@@ -95,55 +101,39 @@ app.post("/api/login", (req, res) => {
   }
 });
 
-app.post("/api/me/cart", (req, res) => {
-  if (user) {
-    const item = req.body;
-    const cart = user.cart;
-    item.quantity = 1;
-    cart.push(item);
+app.post("/api/me/cart", authenticate, (req, res) => {
+  const item = req.body;
+  const cart = req.user.cart;
+  item.quantity = 1;
+  cart.push(item);
+  res.status(200).json(cart);
+});
+
+app.post("/api/me/cart/:productId", authenticate, (req, res) => {
+  const cart = req.user.cart;
+  const newQuantity = req.body.quantity;
+  const productId = req.params.productId;
+  const itemToUpdate = cart.find((item) => item.id === productId);
+  if (itemToUpdate) {
+    itemToUpdate.quantity = newQuantity;
+    res.status(200).json(itemToUpdate);
+  } else {
+    const productToAdd = products.find((item) => item.id === productId);
+    productToAdd.quantity = newQuantity;
+    cart.push(productToAdd);
+    res.status(200).json(productToAdd);
+  }
+});
+
+app.delete("/api/me/cart/:productId", authenticate, (req, res) => {
+  let cart = req.user.cart;
+  const productId = req.params.productId;
+  const itemToRemove = cart.find((item) => item.id === productId);
+  if (itemToRemove) {
+    cart = cart.filter((item) => item.id != productId);
     res.status(200).json(cart);
   } else {
-    res
-      .status(401)
-      .json({ error: "You must be logged in to add items to the cart" });
-  }
-});
-
-app.post("/api/me/cart/:productId", (req, res) => {
-  if (user) {
-    const cart = user.cart;
-    const newQuantity = req.body.quantity;
-    const productId = req.params.productId;
-    const itemToUpdate = cart.find((item) => item.id === productId);
-    if (itemToUpdate) {
-      itemToUpdate.quantity = newQuantity;
-      res.status(200).json(itemToUpdate);
-    } else {
-      const productToAdd = products.find((item) => item.id === productId);
-      productToAdd.quantity = newQuantity;
-      cart.push(productToAdd);
-      res.status(200).json(productToAdd);
-    }
-  } else {
-    res
-      .status(401)
-      .json({ error: "You must have a cart to change item quantities" });
-  }
-});
-
-app.delete("/api/me/cart/:productId", (req, res) => {
-  if (user) {
-    let cart = user.cart;
-    const productId = req.params.productId;
-    const itemToRemove = cart.find((item) => item.id === productId);
-    if (itemToRemove) {
-      cart = cart.filter((item) => item.id != productId);
-      res.status(200).json(cart);
-    } else {
-      res.status(200).json(cart);
-    }
-  } else {
-    res.status(401).json({ error: "You need to have a cart to remove items" });
+    res.status(200).json(cart);
   }
 });
 

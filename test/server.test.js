@@ -1,6 +1,10 @@
 const chai = require("chai");
+const jwt = require("jsonwebtoken");
 const chaiHttp = require("chai-http");
-const server = require("../app/server"); // Adjust the path as needed
+const server = require("../app/server");
+require("dotenv").config();
+const JWT_KEY = process.env.SECRET_KEY || "84345512";
+const token = jwt.sign({ cart: [] }, JWT_KEY, { expiresIn: "30m" });
 
 const should = chai.should();
 const expect = chai.expect;
@@ -59,7 +63,7 @@ describe("Login", () => {
         .send(loginCreds)
         .end((err, res) => {
           res.should.have.status(200);
-          res.body.should.be.a("object");
+          res.body.should.be.a("string");
           done();
         });
     });
@@ -118,6 +122,7 @@ describe("Cart", () => {
       chai
         .request(server)
         .get("/api/me/cart")
+        .set("Authorization", `Bearer ${token}`)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.an("array");
@@ -142,6 +147,7 @@ describe("Cart", () => {
       chai
         .request(server)
         .post("/api/me/cart")
+        .set("Authorization", `Bearer ${token}`)
         .send(item)
         .end((err, res) => {
           res.should.have.status(200);
@@ -158,6 +164,7 @@ describe("Cart", () => {
       chai
         .request(server)
         .post(`/api/me/cart/${productId}`)
+        .set("Authorization", `Bearer ${token}`)
         .send({ quantity: newQuantity })
         .end((err, res) => {
           res.should.have.status(200);
@@ -175,6 +182,7 @@ describe("Cart", () => {
       chai
         .request(server)
         .delete(`/api/me/cart/${productId}`)
+        .set("Authorization", `Bearer ${token}`)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.an("array");
