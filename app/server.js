@@ -39,16 +39,12 @@ app.get("/api/brands", (req, res) => {
 });
 
 app.get("/api/brands/:id/products", (req, res) => {
-  if (brands && products) {
-    const brandId = String(req.params.id);
-    const filteredProducts = products.filter((product) => {
-      const categoryId = String(product.categoryId);
-      return categoryId === brandId;
-    });
-    res.status(200).json(filterProducts);
-  } else {
-    res.status(400).json({ error: "No products found" });
-  }
+  const brandId = String(req.params.id);
+  const filteredProducts = products.filter((product) => {
+    const categoryId = String(product.categoryId);
+    return categoryId === brandId;
+  });
+  res.status(200).json(filteredProducts);
 });
 
 app.get("/api/products", (req, res) => {

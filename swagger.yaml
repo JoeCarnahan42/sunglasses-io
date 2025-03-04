@@ -28,7 +28,7 @@ paths:
       responses:
         200:
           description: "Successful response with a list of brands"
-        400:
+        404:
           description: "No brands found"
   /brands/{id}/products:
     get:
@@ -107,7 +107,7 @@ paths:
               imageUrls:
                 type: "array"
                 items:
-    type: "string"
+                  type: "string"
       responses:
         200:
           description: "Successful response with new item added to cart"
